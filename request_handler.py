@@ -1,8 +1,9 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from views import (delete_entry, get_all_entries, get_entries_by_search,
-                   get_single_entry, create_entry, get_single_mood)
+from views import (create_entry, delete_entry, get_all_entries,
+                   get_entries_by_search, get_single_entry, get_single_mood,
+                   update_entry)
 from views.mood_requests import get_all_moods
 
 
@@ -79,6 +80,29 @@ class HandleRequests(BaseHTTPRequestHandler):
         if resource == "entries":
             new_entry = create_entry(post_body)
             self.wfile.write(f"{new_entry}".encode())
+
+    def do_PUT(self):
+        """Performs a PUT request to the server
+        """
+
+        self._set_headers(201)
+        content_len = int(self.headers.get('content-length', 0))
+        post_body = self.rfile.read(content_len)
+        post_body = json.loads(post_body)
+
+        resource, id = self.parse_url()  # pylint: disable=unbalanced-tuple-unpacking
+
+        success = False
+
+        if resource == "entries":
+            success = update_entry(id, post_body)
+
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
+
+        self.wfile.write("".encode())
 
     def do_GET(self):
         """Performs a GET request to the server

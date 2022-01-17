@@ -1,5 +1,6 @@
 import json
 import sqlite3
+
 from models import Entry, Mood
 
 
@@ -116,6 +117,29 @@ def create_entry(new_entry):
         new_entry['id'] = id
 
     return json.dumps(new_entry)
+
+
+def update_entry(id, new_entry):
+    with sqlite3.connect('./journal.sqlite3') as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        UPDATE Entries
+            SET
+                concept = ?,
+                entry = ?,
+                mood_id = ?,
+                date = ?
+            WHERE id = ?
+        """, (new_entry['concept'], new_entry['entry'],
+              new_entry['mood_id'], new_entry['date'], id, ))
+
+        rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        return False
+    else:
+        return True
 
 
 def delete_entry(id):
